@@ -1,7 +1,9 @@
 package ana_playground
 
 import (
+	"fmt"
 	"go/ast"
+	"strconv"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -27,6 +29,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		(*ast.Ident)(nil),
 	}
 
+	if err := duimport(pass); err != nil {
+		return nil, err
+	}
+
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		switch n := n.(type) {
 		case *ast.Ident:
@@ -37,4 +43,56 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	})
 
 	return nil, nil
+}
+
+type DuplicateValue struct {
+	Spec         *ast.ImportSpec
+	AlreadyError bool
+}
+
+func duimport(pass *analysis.Pass) error {
+	m := make(map[string]*DuplicateValue)
+	for _, f := range pass.Files {
+		for _, imp := range f.Imports {
+			path, err := strconv.Unquote(imp.Path.Value)
+			if err != nil {
+				return err
+			}
+			dv, ok := m[path]
+			if ok {
+				if !dv.AlreadyError {
+					ip, err := buildImportPath(dv.Spec)
+					if err != nil {
+						return err
+					}
+					pass.Reportf(dv.Spec.Pos(), "%s is duplicated import", ip)
+					dv.AlreadyError = true
+				}
+
+				ip, err := buildImportPath(imp)
+				if err != nil {
+					return err
+				}
+				pass.Reportf(imp.Pos(), "%s is duplicated import", ip)
+			} else {
+				m[path] = &DuplicateValue{
+					Spec: imp,
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func buildImportPath(imp *ast.ImportSpec) (string, error) {
+	path, err := strconv.Unquote(imp.Path.Value)
+	if err != nil {
+		return "", err
+	}
+	if imp.Name == nil {
+		return path, nil
+	}
+
+	return fmt.Sprintf("%s %s", imp.Name.Name, path), nil
 }

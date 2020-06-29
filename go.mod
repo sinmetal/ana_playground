@@ -7,5 +7,7 @@ require (
 	github.com/gostaticanalysis/nofmt v0.0.0-20190308162339-35b38e0c7b48
 	github.com/gostaticanalysis/notest v0.0.0-20190308173254-8cf418819436
 	github.com/gostaticanalysis/vetgen v0.1.0
+	github.com/k0kubun/pp v3.0.1+incompatible
+	github.com/mattn/go-colorable v0.1.7 // indirect
 	golang.org/x/tools v0.0.0-20200626171337-aa94e735be7f
 )
