@@ -21,11 +21,12 @@ var flags string
 var AnalyzerPlugin analyzerPlugin
 
 type analyzerPlugin struct{}
+
 func (analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 	if flags != "" {
 		flagset := ana_playground.Analyzer.Flags
 		if err := flagset.Parse(strings.Split(flags, " ")); err != nil {
-			panic("cannot parse flags of ana_playground: "+err.Error())
+			panic("cannot parse flags of ana_playground: " + err.Error())
 		}
 	}
 	return []*analysis.Analyzer{
