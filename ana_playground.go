@@ -1,11 +1,13 @@
 package ana_playground
 
 import (
+	"fmt"
 	"go/ast"
+	"go/parser"
+	"go/token"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 const doc = "ana_playground is ..."
@@ -21,20 +23,14 @@ var Analyzer = &analysis.Analyzer{
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	nodeFilter := []ast.Node{
-		(*ast.Ident)(nil),
-	}
-
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if n.Name == "gopher" {
-				pass.Reportf(n.Pos(), "identifyer is gopher")
-			}
+	for _, f := range pass.Files {
+		fmt.Println(f.Name.String())
+		fset := token.NewFileSet()
+		expr, err := parser.ParseExprFrom(fset, f.Name.String(), nil, 0)
+		if err != nil { /* エラー処理 */
 		}
-	})
+		ast.Print(fset, expr)
+	}
 
 	return nil, nil
 }
