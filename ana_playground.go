@@ -2,10 +2,10 @@ package ana_playground
 
 import (
 	"go/ast"
+	"strconv"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 const doc = "ana_playground is ..."
@@ -21,20 +21,31 @@ var Analyzer = &analysis.Analyzer{
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	nodeFilter := []ast.Node{
-		(*ast.Ident)(nil),
-	}
-
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if n.Name == "gopher" {
-				pass.Reportf(n.Pos(), "identifyer is gopher")
+	for _, file := range pass.Files {
+		for _, decl := range file.Decls {
+			switch v := decl.(type) {
+			case *ast.FuncDecl:
+				for _, body := range v.Body.List {
+					switch b := body.(type) {
+					case *ast.ReturnStmt:
+						for _, result := range b.Results {
+							switch r := result.(type) {
+							case *ast.BasicLit:
+								rawValue, err := strconv.Unquote(r.Value)
+								if err != nil {
+									panic(err)
+								}
+								if len(rawValue) < 1 {
+									pass.Reportf(r.Pos(), "空文字返してるところ")
+								}
+							}
+						}
+					}
+				}
+			default:
 			}
 		}
-	})
+	}
 
 	return nil, nil
 }
