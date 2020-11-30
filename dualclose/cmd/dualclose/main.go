@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/sinmetal/dualclose"
+	"github.com/sinmetal/ana_playground/dualclose"
 	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
